@@ -4,21 +4,8 @@
 
 
 require 'src/facebook.php';
-$ok = false;
-function is_imgvalid($format)
-{
-  $i = 0;
-  $arrayformat = array("jpg", "png", "gif");
-  for($i = 0; $i<count($arrayformat); $i++)
-  {
-    if($format == $arrayformat[$i])
-    {
-      return true;
-    }   
-  }
-  return false;
-}
 
+$ok = false;
 $facebook = new Facebook(array(
   'appId'  => '342792912500591',
   'secret' => '205d97159a9a781a058c494693ddf5c3'
