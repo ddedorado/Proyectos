@@ -4,7 +4,7 @@
 
 
 require 'src/facebook.php';
-
+$ok = false;
 function is_imgvalid($format)
 {
   $i = 0;
@@ -56,35 +56,41 @@ else
 // ---------------------------------COMPROBACION DEL POST PARA ENVIAR EL MENSAJE AL MURO-------------------------------------
 if(isset($_POST['enviar']))
 {
-  if(isset($_POST['imagen']))
+  if(isset($_FILES['imagen']))
   {
-    $img = explode(".", $_POST['imagen']);
-    if(is_imgvalid($img[1]))
+    if(is_uploaded_file($_FILES['imagen']['tmp_name']))
     {
-      /*if(!file_exists("img")) //LA SUBIDA DE IMAGENES QUEDA POR REALIZARSE BIEN
+      if(!file_exists("img")) 
       {
         mkdir("img");
       }
-      move_uploaded_file($_POST['imagen'],'img/'.$_POST['imagen']);*/
-      if($user)
-      {
-        try 
+      if($_FILES['imagen']['type']=="image/jpeg" || $_FILES['imagen']['type']=="image/png" || $_FILES['imagen']['type']=="image/gif" || $_FILES['imagen']['type']=="image/jpeg")
+      { 
+        $path = "img/".$_FILES['imagen']['name'];
+        if(move_uploaded_file($_FILES['imagen']['tmp_name'], $path))
         {
-          $publishStream = $facebook->api("/".$user."/feed", 'post', array(
-                        'message'   => $_POST['mensaje'],
-                        'picture'   => "http://ernestogamez.es/wp-content/uploads/php_logo.jpg", 
-                        'name'      => $_POST['titulo']
-                      ));
-          $ok = true;
-        }catch(FacebookApiException $e)
-        {
-          error_log($e);
+          if($user)
+          {
+            try 
+            {
+              $publishStream = $facebook->api("/".$user."/feed", 'post', array(
+                            'message'   => $_POST['mensaje'],
+                            'picture'   => "http://localhost:8080/img/".$_FILES['imagen']['name'],//"http://ernestogamez.es/wp-content/uploads/php_logo.jpg", 
+                            'name'      => $_POST['titulo']
+                          ));
+              $ok = true;
+            }catch(FacebookApiException $e)
+            {
+              echo error_log($e);
+            }
+          }
+          else
+          {
+            header("Location: ".$loginUrl);
+          }  
         }
       }
-      else
-      {
-        header("Location: ".$loginUrl);
-      }
+      else echo "La Imagen no es valida.";
     }
   }
 }
@@ -94,17 +100,22 @@ if(isset($_POST['enviar']))
 <html xmlns:fb="http://www.facebook.com/2008/fbml">
   <head>
     <title>Proars</title>
+    <link rel="stylesheet" type="text/css" href="css/reset.css">
+    <link rel="stylesheet" type="text/css" href="css/form.css">
   </head>
   <body>
-    <?php if ($ok): echo "<h1>PROARS</h1><br />Mensaje subido al muro<br />"; else: echo "<h1>PROARS</h1><br />"; endif?>
-    <form method="POST" action="">
-      <label>T&iacute;tulo:</label>
-      <input type="text" name="titulo" value="" /><br />
-      <label>Mensaje:</label><br />
-      <textarea name="mensaje" cols="50" rows="5"></textarea><br />
-      <label>Imagen:</label>
-      <input type="file" name="imagen" value="" /><br />
-      <input type="submit" name="enviar" value="Enviar"/>
-    </form>
+    <div id="main">
+      <h1>PROARS</h1><br />
+      <form method="POST" action="" enctype="multipart/form-data">
+        <label>T&iacute;tulo:</label>
+        <input type="text" name="titulo" value=""  id="titulo" /><br />
+        <label>Mensaje:</label><br />
+        <textarea id="comment" name="mensaje" cols="50" rows="5"></textarea><br />
+        <label>Imagen:</label>
+        <input type="file" name="imagen" /><br />
+        <input type="submit" name="enviar" value="Enviar"/>
+      </form>
+      <?php if($ok) echo '<div id="ok"><p>Se ha compartido en su muro</div>'; ?>
+    </div>
   </body>
 </html>
